@@ -61,12 +61,13 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
       className="player-seat"
       style={{
         ...style,
+        transform: 'translate(-50%, -50%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        width: '180px',
-        padding: '12px',
+        width: 'clamp(110px, 22vw, 180px)',
+        padding: 'clamp(6px, 1.5vw, 12px)',
         borderRadius: '16px',
         background: player.eliminated
           ? 'rgba(0, 0, 0, 0.4)'
@@ -145,8 +146,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
               key={`${idx}-${card.role}-${revealed}`}
               className={`card-container ${showFront ? 'revealed' : ''} card-draw-animation`}
               style={{
-                width: '64px',
-                height: '96px',
+                width: 'clamp(44px, 8vw, 64px)',
+                height: 'calc(clamp(44px, 8vw, 64px) * 1.5)',
                 perspective: '1000px',
                 animationDelay: `${idx * 150}ms`,
                 ['--draw-start-transform' as any]: startTransform,

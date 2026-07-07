@@ -5,7 +5,7 @@ import { ChallengeBlockModal } from './ChallengeBlockModal';
 import { CardSelectionModal } from './CardSelectionModal';
 import { GameLog } from './GameLog';
 import { RuleBookModal } from './RuleBookModal';
-import { ArrowLeft, RefreshCw, Trophy, Coins, BookOpen } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Trophy, Coins, BookOpen, Terminal } from 'lucide-react';
 
 interface Card {
   role: string;
@@ -78,6 +78,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
   const { players, phase, currentAction, pendingLossPlayerId, pendingRevealPlayerId, logs } = gameState;
   const [showRules, setShowRules] = useState(false);
+  const [showMobileLogs, setShowMobileLogs] = useState(false);
 
   const localPlayer = players.find((p) => p.id === localPlayerId);
   const activePlayer = players[gameState.currentPlayerIndex];
@@ -240,6 +241,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
+            onClick={() => setShowMobileLogs(true)}
+            className="btn btn-secondary mobile-log-trigger"
+            style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            <Terminal size={14} /> Logs
+          </button>
+          <button
             onClick={() => setShowRules(true)}
             className="btn btn-secondary"
             style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}
@@ -352,7 +360,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               bottom: '24px',
               left: '50%',
               transform: 'translateX(-50%)',
-              width: '100%',
+              width: 'calc(100% - 32px)',
               maxWidth: '460px',
               zIndex: 30,
               pointerEvents: 'auto',
@@ -370,7 +378,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         </div>
 
         {/* Right Column: Game Logs ledger sidebar */}
-        <div style={{ height: '100%' }}>
+        <div className="desktop-log-sidebar" style={{ height: '100%' }}>
           <GameLog logs={logs} />
         </div>
       </div>
@@ -496,6 +504,21 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         </div>
       )}
       {showRules && <RuleBookModal onClose={() => setShowRules(false)} />}
+      {showMobileLogs && (
+        <div className="modal-overlay" style={{ zIndex: 100 }}>
+          <div className="modal-content glass-panel-heavy" style={{ padding: '0', width: '90%', maxWidth: '400px', height: '80vh', display: 'flex', flexDirection: 'column', border: '1.5px solid var(--accent-gold)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid var(--border-glass)' }}>
+              <span style={{ color: 'white', fontWeight: 700, fontSize: '15px' }}>GAME LEDGER</span>
+              <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '12px' }} onClick={() => setShowMobileLogs(false)}>
+                Close
+              </button>
+            </div>
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <GameLog logs={logs} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

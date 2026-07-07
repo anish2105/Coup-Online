@@ -130,11 +130,23 @@ h1, h2, h3, h4, h5 {
   min-height: 0;
 }
 
+.mobile-log-trigger {
+  display: none !important;
+}
+
 @media (max-width: 1024px) {
   .main-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 200px;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: none !important;
     overflow: hidden;
+  }
+  
+  .desktop-log-sidebar {
+    display: none !important;
+  }
+  
+  .mobile-log-trigger {
+    display: flex !important;
   }
 }
 
