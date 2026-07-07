@@ -319,8 +319,17 @@ export class CoupGame {
           this.resolveAction();
         }
       } else if (this.state.phase === 'BLOCK_WINDOW') {
-        // Blocking passed. Resolve action
-        this.resolveAction();
+        if (this.state.currentAction?.blockerId) {
+          // Block challenge window: all players passed the challenge to the block
+          // The block succeeds, action is cancelled
+          const blocker = this.state.players.find((p) => p.id === this.state.currentAction?.blockerId)!;
+          this.addLog(`${blocker.name}'s block was accepted. Action cancelled.`, 'system');
+          this.nextTurn();
+        } else {
+          // Normal block window: all players chose to pass without blocking
+          // The action succeeds, resolve it
+          this.resolveAction();
+        }
       }
     }
 
