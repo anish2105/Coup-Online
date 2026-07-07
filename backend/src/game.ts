@@ -431,7 +431,9 @@ export class CoupGame {
       } else {
         // Action is valid, but can it be blocked now?
         const blockable = ['foreign_aid', 'assassinate', 'steal'].includes(action.type);
-        if (blockable) {
+        const isChallengerTarget = challenger.id === action.targetId;
+        
+        if (blockable && !isChallengerTarget) {
           this.state.pendingActionAfterLoss = 'BLOCK_WINDOW';
         } else {
           this.state.pendingActionAfterLoss = 'RESOLVE';
