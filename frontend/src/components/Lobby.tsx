@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Play, LogOut, ArrowRight, User, BookOpen } from 'lucide-react';
+import { Users, Play, LogOut, ArrowRight, User, BookOpen, Volume2, VolumeX } from 'lucide-react';
 import { RuleBookModal } from './RuleBookModal';
 
 interface LobbyOverview {
@@ -23,6 +23,8 @@ interface LobbyProps {
   onJoin: (lobbyId: string, name: string) => void;
   onLeave: () => void;
   onStartGame: () => void;
+  isMuted: boolean;
+  onToggleMute: () => void;
 }
 
 export const Lobby: React.FC<LobbyProps> = ({
@@ -33,6 +35,8 @@ export const Lobby: React.FC<LobbyProps> = ({
   onJoin,
   onLeave,
   onStartGame,
+  isMuted,
+  onToggleMute,
 }) => {
   const [name, setName] = useState('');
   const [selectedLobby, setSelectedLobby] = useState<string | null>(null);
@@ -56,7 +60,28 @@ export const Lobby: React.FC<LobbyProps> = ({
   if (!joinedLobbyId) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 60px)', padding: '20px' }}>
-        <div className="glass-panel-heavy" style={{ width: '100%', maxWidth: '480px', padding: '32px' }}>
+        <div className="glass-panel-heavy" style={{ width: '100%', maxWidth: '480px', padding: '32px', position: 'relative' }}>
+          {/* Mute button on top-right of panel */}
+          <button
+            onClick={onToggleMute}
+            className="btn btn-secondary"
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0',
+            }}
+            title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+          >
+            {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          </button>
+          
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <h1 className="title-glow" style={{ fontSize: '32px', marginBottom: '8px' }}>C O U P</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>
@@ -182,6 +207,14 @@ export const Lobby: React.FC<LobbyProps> = ({
             <h2 style={{ fontSize: '24px', color: 'white' }}>{currentLobby?.name || 'Coup Room'}</h2>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={onToggleMute}
+              className="btn btn-secondary"
+              style={{ padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '8px' }}
+              title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+            >
+              {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+            </button>
             <button
               onClick={() => setShowRules(true)}
               className="btn btn-secondary"

@@ -5,7 +5,7 @@ import { ChallengeBlockModal } from './ChallengeBlockModal';
 import { CardSelectionModal } from './CardSelectionModal';
 import { GameLog } from './GameLog';
 import { RuleBookModal } from './RuleBookModal';
-import { ArrowLeft, RefreshCw, Trophy, Coins, BookOpen, Terminal } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Trophy, Coins, BookOpen, Terminal, Volume2, VolumeX } from 'lucide-react';
 
 interface Card {
   role: string;
@@ -63,6 +63,8 @@ interface GameBoardProps {
   onResolveExchange: (selectedCards: string[]) => void;
   onResetGame: () => void;
   onLeave: () => void;
+  isMuted: boolean;
+  onToggleMute: () => void;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
@@ -75,6 +77,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onResolveExchange,
   onResetGame,
   onLeave,
+  isMuted,
+  onToggleMute,
 }) => {
   const { players, phase, currentAction, pendingLossPlayerId, pendingRevealPlayerId, logs } = gameState;
   const [showRules, setShowRules] = useState(false);
@@ -240,6 +244,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={onToggleMute}
+            className="btn btn-secondary"
+            style={{ padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '8px' }}
+            title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+          >
+            {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+          </button>
           <button
             onClick={() => setShowMobileLogs(true)}
             className="btn btn-secondary mobile-log-trigger"
