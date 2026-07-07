@@ -2,18 +2,6 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { Lobby } from './components/Lobby';
 import { GameBoard } from './components/GameBoard';
-import {
-  playCoinSound,
-  playCardDrawSound,
-  playActionSound,
-  playBlockSound,
-  playStealSound,
-  playCoupSound,
-  playChallengeSound,
-  playWinSound,
-  getMutedState,
-  setMutedState
-} from './utils/soundEffects';
 
 interface LobbyOverview {
   id: string;
@@ -74,66 +62,6 @@ function App() {
   const [joinedLobbyId, setJoinedLobbyId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<CoupGameState | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(() => getMutedState());
-
-  const handleToggleMute = useCallback(() => {
-    const nextMute = !isMuted;
-    setIsMuted(nextMute);
-    setMutedState(nextMute);
-  }, [isMuted]);
-
-  const prevLogsLength = useRef(0);
-
-  useEffect(() => {
-    if (!gameState) {
-      prevLogsLength.current = 0;
-      return;
-    }
-
-    const logs = gameState.logs;
-    if (logs.length > prevLogsLength.current) {
-      // New log added! Play corresponding sound
-      const latestLog = logs[logs.length - 1];
-      
-      // Prevent sound triggers on initial load/refresh
-      if (prevLogsLength.current > 0) {
-        switch (latestLog.type) {
-          case 'coins':
-            playCoinSound();
-            break;
-          case 'block':
-            playBlockSound();
-            break;
-          case 'challenge':
-            playChallengeSound();
-            break;
-          case 'reveal':
-            playCardDrawSound();
-            break;
-          case 'elimination':
-            playChallengeSound();
-            break;
-          case 'action':
-            if (latestLog.message.toLowerCase().includes('coup') || latestLog.message.toLowerCase().includes('assassination')) {
-              playCoupSound();
-            } else if (latestLog.message.toLowerCase().includes('steal')) {
-              playStealSound();
-            } else {
-              playActionSound();
-            }
-            break;
-          case 'system':
-            if (latestLog.message.toLowerCase().includes('won') || latestLog.message.toLowerCase().includes('winner')) {
-              playWinSound();
-            } else if (latestLog.message.toLowerCase().includes('start') || latestLog.message.toLowerCase().includes('exchanged')) {
-              playCardDrawSound();
-            }
-            break;
-        }
-      }
-    }
-    prevLogsLength.current = logs.length;
-  }, [gameState?.logs]);
 
   useEffect(() => {
     // Connect to backend socket server
@@ -273,8 +201,6 @@ function App() {
           onResolveExchange={handleResolveExchange}
           onResetGame={handleResetGame}
           onLeave={handleLeaveLobby}
-          isMuted={isMuted}
-          onToggleMute={handleToggleMute}
         />
       ) : (
         <Lobby
@@ -285,8 +211,6 @@ function App() {
           onJoin={handleJoinLobby}
           onLeave={handleLeaveLobby}
           onStartGame={handleStartGame}
-          isMuted={isMuted}
-          onToggleMute={handleToggleMute}
         />
       )}
     </div>
