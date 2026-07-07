@@ -6,6 +6,7 @@ interface CardSelectionModalProps {
   description: string;
   cards: string[]; // List of card roles (e.g. ['duke', 'assassin', 'captain'])
   countToSelect: number; // 1 for influence loss, 1 or 2 for Ambassador
+  originalCount?: number; // Optional count of original active cards (Ambassador exchange)
   onSubmit: (selectedIndexes: number[]) => void;
 }
 
@@ -14,6 +15,7 @@ export const CardSelectionModal: React.FC<CardSelectionModalProps> = ({
   description,
   cards,
   countToSelect,
+  originalCount,
   onSubmit,
 }) => {
   const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
@@ -122,6 +124,29 @@ export const CardSelectionModal: React.FC<CardSelectionModalProps> = ({
                     opacity: 0.85,
                   }}
                 />
+
+                {/* Original/New badge */}
+                {originalCount !== undefined && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '6px',
+                      left: '6px',
+                      fontSize: '8px',
+                      fontWeight: 800,
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      zIndex: 10,
+                      textTransform: 'uppercase',
+                      border: idx < originalCount ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid var(--accent-gold)',
+                      backgroundColor: idx < originalCount ? 'rgba(0, 0, 0, 0.7)' : 'rgba(212, 175, 55, 0.25)',
+                      color: idx < originalCount ? '#fff' : 'var(--accent-gold)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    {idx < originalCount ? 'Original' : 'New'}
+                  </div>
+                )}
 
                 {/* Selected Checkmark overlay */}
                 {isSelected && (

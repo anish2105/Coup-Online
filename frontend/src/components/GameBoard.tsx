@@ -116,6 +116,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           isActiveTurn={isActiveTurn}
           isPendingLoss={isPendingLoss}
           style={{ left, top }}
+          angle={angle}
+          radius={radius}
         />
       );
     });
@@ -430,6 +432,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           description={`Select exactly ${localActiveCards.length} cards to KEEP. The unselected cards will be returned to the Court Deck.`}
           cards={gameState.ambassadorOptions}
           countToSelect={localActiveCards.length}
+          originalCount={localActiveCards.length}
           onSubmit={(indexes) => {
             // Map selected indexes to their roles
             const selected = indexes.map((idx) => gameState.ambassadorOptions[idx]);

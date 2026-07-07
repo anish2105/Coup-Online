@@ -348,3 +348,20 @@ h1, h2, h3, h4, h5 {
   z-index: 50;
   pointer-events: none;
 }
+
+/* Animations for cards drawing */
+.card-draw-animation {
+  opacity: 0;
+  animation: card-draw-fly 0.75s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes card-draw-fly {
+  0% {
+    transform: var(--draw-start-transform) scale(0.1) rotate(180deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}

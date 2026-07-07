@@ -163,8 +163,7 @@ export class CoupGame {
     // Let's use RESOLVING or turn-init phase. Actually, we start at turn 0 and phase LOBBY -> first player turn.
     // Let's set phase to RESOLVING but wait for active player action. Let's make an active turn phase:
     // Let's reuse "CHALLENGE_WINDOW" as wait action, but let's make a state or clean flow.
-    // To make it simple, we can have phase = 'RESOLVING' when waiting for turn action, or a phase 'LOBBY' -> nextTurn() sets phase.
-    this.state.currentPlayerIndex = 0;
+    this.state.currentPlayerIndex = Math.floor(Math.random() * this.state.players.length);
     this.state.currentAction = null;
     this.state.phase = 'RESOLVING'; // In resolving state with null action means waiting for player action!
     this.addLog(`Game started! It's ${this.getCurrentPlayer()!.name}'s turn.`, 'system');

@@ -21,6 +21,8 @@ interface PlayerSeatProps {
   isActiveTurn: boolean;
   isPendingLoss: boolean;
   style: React.CSSProperties;
+  angle: number;
+  radius: string;
 }
 
 export const PlayerSeat: React.FC<PlayerSeatProps> = ({
@@ -29,6 +31,8 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   isActiveTurn,
   isPendingLoss,
   style,
+  angle,
+  radius,
 }) => {
   // Get character background/border colors based on role
   const getRoleColor = (role: string) => {
@@ -134,11 +138,19 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           const revealed = card.revealed;
           const showFront = isLocal || revealed;
           
+          const startTransform = `translate(calc(-${Math.cos(angle)} * ${radius}), calc(-${Math.sin(angle)} * ${radius}))`;
+          
           return (
             <div
-              key={idx}
-              className={`card-container ${showFront ? 'revealed' : ''}`}
-              style={{ width: '64px', height: '96px', perspective: '1000px' }}
+              key={`${idx}-${card.role}-${revealed}`}
+              className={`card-container ${showFront ? 'revealed' : ''} card-draw-animation`}
+              style={{
+                width: '64px',
+                height: '96px',
+                perspective: '1000px',
+                animationDelay: `${idx * 150}ms`,
+                ['--draw-start-transform' as any]: startTransform,
+              }}
             >
               <div className="card-inner">
                 {/* Card Back */}
