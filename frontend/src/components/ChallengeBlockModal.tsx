@@ -13,6 +13,7 @@ interface ActionPayload {
 interface Player {
   id: string;
   name: string;
+  coins?: number;
 }
 
 interface ChallengeBlockModalProps {
@@ -135,6 +136,73 @@ export const ChallengeBlockModal: React.FC<ChallengeBlockModalProps> = ({
     ? isActor
     : (currentAction.blockerId ? currentAction.blockerId === localPlayerId : isActor);
 
+  const localPlayer = players.find((p) => p.id === localPlayerId);
+
+  const renderPanelHeader = () => {
+    if (!localPlayer) return null;
+    const coins = localPlayer.coins ?? 0;
+
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid var(--border-glass)',
+        paddingBottom: '12px',
+        marginBottom: '14px',
+        flexWrap: 'wrap',
+        gap: '12px',
+        width: '100%'
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-start' }}>
+          <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Your Status
+          </span>
+          <span style={{ fontSize: '14px', fontWeight: 800, color: 'white' }}>
+            {localPlayer.name} <span style={{ color: 'var(--accent-gold)', marginLeft: '4px', fontWeight: 600 }}>({coins} Coins)</span>
+          </span>
+        </div>
+        
+        {/* Miniature hand display */}
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700 }}>
+            Your Hand:
+          </span>
+          {localPlayerCards.length === 0 ? (
+            <span style={{ fontSize: '10px', color: 'var(--color-assassin)', fontWeight: 800 }}>ELIMINATED</span>
+          ) : (
+            localPlayerCards.map((role, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  background: 'rgba(0, 0, 0, 0.4)',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: `1.5px solid var(--color-${role.toLowerCase()})`,
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  color: 'white',
+                  textTransform: 'uppercase',
+                  boxShadow: `0 0 6px var(--color-${role.toLowerCase()})30`,
+                }}
+              >
+                <img
+                  src={`/assets/${role.toLowerCase()}.png`}
+                  alt={role}
+                  style={{ width: '14px', height: '14px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+                {role}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="modal-overlay">
       <div className="modal-content gold-glow-panel" style={{ padding: '24px', maxWidth: '440px' }}>
@@ -144,6 +212,8 @@ export const ChallengeBlockModal: React.FC<ChallengeBlockModalProps> = ({
             {phase === 'CHALLENGE_WINDOW' ? 'Challenge Opportunity' : 'Reaction Window'}
           </h2>
         </div>
+
+        {renderPanelHeader()}
 
         <p style={{ fontSize: '15px', color: 'var(--text-primary)', marginBottom: '20px', lineHeight: '1.5' }}>
           {getPromptText()}
