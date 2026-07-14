@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 3001;
 const LOBBY_IDS = ['lobby-1', 'lobby-2', 'lobby-3', 'lobby-4', 'lobby-5'];
 const games: Record<string, CoupGame> = {};
 const disconnectTimers: Record<string, NodeJS.Timeout> = {};
+const playerSockets: Record<string, string> = {};
 
 LOBBY_IDS.forEach((id) => {
   games[id] = new CoupGame();
@@ -89,6 +90,9 @@ io.on('connection', (socket) => {
         return;
       }
     }
+
+    // Set active socket for player
+    playerSockets[playerId] = socket.id;
 
     // Bind lobby ID and playerId to socket
     socket.data.lobbyId = lobbyId;
@@ -210,11 +214,12 @@ io.on('connection', (socket) => {
     const { lobbyId, playerId } = socket.data;
     if (!lobbyId || !playerId) return;
 
-    // Clear any disconnect timer just in case
+    // Clear any disconnect timer and active socket reference just in case
     if (disconnectTimers[playerId]) {
       clearTimeout(disconnectTimers[playerId]);
       delete disconnectTimers[playerId];
     }
+    delete playerSockets[playerId];
 
     const game = games[lobbyId];
     game.removePlayer(playerId);
@@ -233,43 +238,49 @@ io.on('connection', (socket) => {
     console.log(`User disconnected: ${socket.id}`);
     const { lobbyId, playerId } = socket.data;
     if (lobbyId && playerId) {
-      const game = games[lobbyId];
-      if (game) {
-        // Store expiration timestamp on player object
-        const state = game.getState();
-        const player = state.players.find((p) => p.id === playerId);
-        if (player) {
-          player.disconnectExpiresAt = Date.now() + 25000;
-        }
-
-        // Toggle online status to false
-        game.setPlayerOnline(playerId, false);
-        io.to(lobbyId).emit('game_state', game.getState());
-
-        // Cancel any existing disconnect timer for this player
-        if (disconnectTimers[playerId]) {
-          clearTimeout(disconnectTimers[playerId]);
-        }
-
-        // Set a 25-second grace period timer
-        disconnectTimers[playerId] = setTimeout(() => {
-          console.log(`Grace period expired for player ${playerId} in lobby ${lobbyId}`);
-          delete disconnectTimers[playerId];
-
+      // ONLY trigger disconnect if this socket is still the active one!
+      if (playerSockets[playerId] === socket.id) {
+        const game = games[lobbyId];
+        if (game) {
+          // Store expiration timestamp on player object
           const state = game.getState();
-          if (state.phase === 'LOBBY') {
-            // If still in lobby phase, just remove them
-            game.removePlayer(playerId);
-            io.to(lobbyId).emit('game_state', game.getState());
-            checkAndResetLobby(lobbyId);
-            broadcastLobbyOverview();
-          } else {
-            // If mid-game, eliminate them
-            game.eliminatePlayerOffline(playerId);
-            io.to(lobbyId).emit('game_state', game.getState());
-            checkAndResetLobby(lobbyId);
+          const player = state.players.find((p) => p.id === playerId);
+          if (player) {
+            player.disconnectExpiresAt = Date.now() + 25000;
           }
-        }, 25000);
+
+          // Toggle online status to false
+          game.setPlayerOnline(playerId, false);
+          io.to(lobbyId).emit('game_state', game.getState());
+
+          // Cancel any existing disconnect timer for this player
+          if (disconnectTimers[playerId]) {
+            clearTimeout(disconnectTimers[playerId]);
+          }
+
+          // Set a 25-second grace period timer
+          disconnectTimers[playerId] = setTimeout(() => {
+            console.log(`Grace period expired for player ${playerId} in lobby ${lobbyId}`);
+            delete disconnectTimers[playerId];
+            delete playerSockets[playerId];
+
+            const state = game.getState();
+            if (state.phase === 'LOBBY') {
+              // If still in lobby phase, just remove them
+              game.removePlayer(playerId);
+              io.to(lobbyId).emit('game_state', game.getState());
+              checkAndResetLobby(lobbyId);
+              broadcastLobbyOverview();
+            } else {
+              // If mid-game, eliminate them
+              game.eliminatePlayerOffline(playerId);
+              io.to(lobbyId).emit('game_state', game.getState());
+              checkAndResetLobby(lobbyId);
+            }
+          }, 25000);
+        }
+      } else {
+        console.log(`Disconnected socket ${socket.id} is obsolete for player ${playerId}. Active socket is ${playerSockets[playerId]}.`);
       }
     }
   });
