@@ -115,15 +115,14 @@ export const ChallengeBlockModal: React.FC<ChallengeBlockModalProps> = ({
   // Determine what reaction choices are available to the local player
   const showChallenge = phase === 'CHALLENGE_WINDOW' && !isActor;
   
-  // Can block if in BLOCK_WINDOW, and no block has been declared yet, and we are not the actor.
-  // Wait, who is allowed to block?
-  // Foreign Aid: anyone can block.
-  // Steal / Assassinate: only target can block.
+  // Can block if:
+  // - We are in BLOCK_WINDOW, and no block has been declared yet, and we are not the actor, and (it is foreign aid or we are the target).
+  // - OR we are in CHALLENGE_WINDOW, and we are the target, and the action is blockable (assassinate/steal).
   const showBlockOptions =
-    phase === 'BLOCK_WINDOW' &&
     !currentAction.blockerId &&
     !isActor &&
-    (currentAction.type === 'foreign_aid' || isTarget);
+    ((phase === 'BLOCK_WINDOW' && (currentAction.type === 'foreign_aid' || isTarget)) ||
+     (phase === 'CHALLENGE_WINDOW' && isTarget && ['assassinate', 'steal'].includes(currentAction.type)));
 
   // Can challenge a block if we are in BLOCK_WINDOW, a block HAS been declared, and we are not the blocker
   const showChallengeBlock =
