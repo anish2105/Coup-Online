@@ -51,6 +51,7 @@ interface CoupGameState {
   logs: GameLogEntry[];
   winnerId: string | null;
   ambassadorOptions: string[];
+  serverTime?: number;
 }
 
 interface GameBoardProps {
@@ -119,6 +120,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           style={{ left, top }}
           angle={angle}
           radius={radius}
+          serverTime={gameState.serverTime || Date.now()}
         />
       );
     });

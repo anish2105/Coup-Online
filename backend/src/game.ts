@@ -55,6 +55,7 @@ export interface CoupGameState {
   logs: GameLog[];
   winnerId: string | null;
   ambassadorOptions: string[];
+  serverTime?: number;
 }
 
 export class CoupGame {
@@ -79,7 +80,10 @@ export class CoupGame {
   }
 
   public getState(): CoupGameState {
-    return this.state;
+    return {
+      ...this.state,
+      serverTime: Date.now(),
+    };
   }
 
   public addLog(message: string, type: GameLog['type']) {

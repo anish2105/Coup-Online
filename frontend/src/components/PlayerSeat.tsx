@@ -25,6 +25,7 @@ interface PlayerSeatProps {
   style: React.CSSProperties;
   angle: number;
   radius: string;
+  serverTime: number;
 }
 
 export const PlayerSeat: React.FC<PlayerSeatProps> = ({
@@ -35,20 +36,20 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   style,
   angle,
   radius,
+  serverTime,
 }) => {
   const [timeLeft, setTimeLeft] = React.useState<number>(0);
 
   React.useEffect(() => {
     if (player.online === false && player.disconnectExpiresAt) {
-      const calculateTimeLeft = () => {
-        const diff = player.disconnectExpiresAt! - Date.now();
-        return Math.max(0, Math.ceil(diff / 1000));
-      };
+      const serverRemaining = player.disconnectExpiresAt - serverTime;
+      const initialSeconds = Math.max(0, Math.ceil(serverRemaining / 1000));
+      setTimeLeft(initialSeconds);
 
-      setTimeLeft(calculateTimeLeft());
-
+      const startTime = Date.now();
       const interval = setInterval(() => {
-        const remaining = calculateTimeLeft();
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const remaining = Math.max(0, initialSeconds - elapsed);
         setTimeLeft(remaining);
         if (remaining <= 0) {
           clearInterval(interval);
@@ -57,7 +58,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
 
       return () => clearInterval(interval);
     }
-  }, [player.online, player.disconnectExpiresAt]);
+  }, [player.online, player.disconnectExpiresAt, serverTime]);
 
   // Get character background/border colors based on role
   const getRoleColor = (role: string) => {

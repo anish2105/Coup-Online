@@ -54,6 +54,7 @@ interface CoupGameState {
   logs: GameLogEntry[];
   winnerId: string | null;
   ambassadorOptions: string[];
+  serverTime?: number;
 }
 
 const PLAYER_ID = (() => {
