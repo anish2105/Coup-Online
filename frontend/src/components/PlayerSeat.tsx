@@ -13,6 +13,8 @@ interface Player {
   cards: Card[];
   eliminated: boolean;
   isHost: boolean;
+  online?: boolean;
+  disconnectExpiresAt?: number | null;
 }
 
 interface PlayerSeatProps {
@@ -34,6 +36,29 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   angle,
   radius,
 }) => {
+  const [timeLeft, setTimeLeft] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    if (player.online === false && player.disconnectExpiresAt) {
+      const calculateTimeLeft = () => {
+        const diff = player.disconnectExpiresAt! - Date.now();
+        return Math.max(0, Math.ceil(diff / 1000));
+      };
+
+      setTimeLeft(calculateTimeLeft());
+
+      const interval = setInterval(() => {
+        const remaining = calculateTimeLeft();
+        setTimeLeft(remaining);
+        if (remaining <= 0) {
+          clearInterval(interval);
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [player.online, player.disconnectExpiresAt]);
+
   // Get character background/border colors based on role
   const getRoleColor = (role: string) => {
     switch (role.toLowerCase()) {
@@ -87,19 +112,19 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
           : isPendingLoss
           ? '0 0 15px rgba(239, 68, 68, 0.25)'
           : 'none',
-        opacity: player.eliminated ? 0.6 : 1,
+        opacity: player.eliminated ? 0.6 : (player.online === false ? 0.45 : 1),
       }}
     >
       {/* Active turn indicator pulse */}
       {isActiveTurn && <div className="active-ring" style={{ borderRadius: '16px' }} />}
 
       {/* Name and Host tag */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', maxWidth: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px', maxWidth: '100%', flexWrap: 'wrap' }}>
         <span
           style={{
             fontWeight: 600,
             fontSize: '14px',
-            color: player.eliminated ? 'var(--text-muted)' : 'white',
+            color: player.eliminated ? 'var(--text-muted)' : (player.online === false ? 'var(--text-muted)' : 'white'),
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -107,6 +132,11 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         >
           {player.name}
         </span>
+        {player.online === false && (
+          <span style={{ fontSize: '9px', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: 'var(--color-assassin)', padding: '1px 4px', borderRadius: '3px', border: '1px solid rgba(239, 68, 68, 0.4)', fontWeight: 700, marginLeft: '2px' }}>
+            OFFLINE ({timeLeft}s)
+          </span>
+        )}
         {isLocal && (
           <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 600, marginLeft: '2px' }}>
             (You)

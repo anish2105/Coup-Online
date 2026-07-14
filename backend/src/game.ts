@@ -8,6 +8,8 @@ export interface Player {
   }[];
   eliminated: boolean;
   isHost: boolean;
+  online?: boolean;
+  disconnectExpiresAt?: number | null;
 }
 
 export interface GameLog {
@@ -101,6 +103,7 @@ export class CoupGame {
       cards: [],
       eliminated: false,
       isHost,
+      online: true,
     });
 
     this.addLog(`${name} joined the lobby.`, 'system');
@@ -131,6 +134,53 @@ export class CoupGame {
       player.cards.forEach((c) => (c.revealed = true));
       this.checkWinner();
       if (this.state.phase !== 'GAME_OVER' && this.getCurrentPlayer()?.id === id) {
+        this.nextTurn();
+      }
+    }
+  }
+
+  public setPlayerOnline(id: string, online: boolean) {
+    const player = this.state.players.find((p) => p.id === id);
+    if (player) {
+      player.online = online;
+      if (online) {
+        player.disconnectExpiresAt = null;
+      }
+      this.addLog(`${player.name} is now ${online ? 'online' : 'offline'}.`, 'system');
+    }
+  }
+
+  public eliminatePlayerOffline(id: string) {
+    const player = this.state.players.find((p) => p.id === id);
+    if (player && !player.eliminated) {
+      player.eliminated = true;
+      player.coins = 0;
+      player.disconnectExpiresAt = null;
+      player.cards.forEach((c) => (c.revealed = true));
+      this.addLog(`${player.name} disconnected for too long and was eliminated.`, 'elimination');
+
+      if (this.checkWinner()) return;
+
+      // If they were in the middle of exchanging cards, return pool to deck
+      if (this.state.phase === 'EXCHANGING' && this.state.currentPlayerIndex !== -1) {
+        const activePlayer = this.state.players[this.state.currentPlayerIndex];
+        if (activePlayer && activePlayer.id === id) {
+          if (this.state.ambassadorOptions && this.state.ambassadorOptions.length > 0) {
+            this.state.deck.push(...this.state.ambassadorOptions);
+            this.state.deck = this.shuffle(this.state.deck);
+            this.state.ambassadorOptions = [];
+          }
+        }
+      }
+
+      // If they were active or reaction was pending on them, skip to next turn
+      const isPendingReveal = this.state.pendingRevealPlayerId === id;
+      const isPendingLoss = this.state.pendingLossPlayerId === id;
+      const isCurrentPlayer = this.state.players[this.state.currentPlayerIndex]?.id === id;
+
+      if (isCurrentPlayer || isPendingReveal || isPendingLoss) {
+        this.state.pendingRevealPlayerId = null;
+        this.state.pendingLossPlayerId = null;
         this.nextTurn();
       }
     }
@@ -304,7 +354,10 @@ export class CoupGame {
       (p) => !p.eliminated && p.id !== excludeId
     );
 
-    const allPassed = activeOpponents.every((p) => this.state.responses[p.id]?.response === 'pass');
+    const allPassed = activeOpponents.every((p) => {
+      if (p.online === false) return true;
+      return this.state.responses[p.id]?.response === 'pass';
+    });
 
     if (allPassed) {
       if (this.state.phase === 'CHALLENGE_WINDOW') {

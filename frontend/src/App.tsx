@@ -56,6 +56,15 @@ interface CoupGameState {
   ambassadorOptions: string[];
 }
 
+const PLAYER_ID = (() => {
+  let id = localStorage.getItem('coup_player_id');
+  if (!id) {
+    id = 'p_' + Math.random().toString(36).substring(2, 11);
+    localStorage.setItem('coup_player_id', id);
+  }
+  return id;
+})();
+
 function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [lobbies, setLobbies] = useState<LobbyOverview[]>([]);
@@ -71,6 +80,18 @@ function App() {
 
     newSocket.on('connect', () => {
       console.log('Connected to socket server');
+      
+      // Auto-reconnect if we were in a lobby before
+      const savedLobbyId = localStorage.getItem('coup_joined_lobby_id');
+      const savedPlayerName = localStorage.getItem('coup_player_name');
+      if (savedLobbyId && savedPlayerName) {
+        setJoinedLobbyId(savedLobbyId);
+        newSocket.emit('join_lobby', {
+          lobbyId: savedLobbyId,
+          playerName: savedPlayerName,
+          playerId: PLAYER_ID
+        });
+      }
     });
 
     newSocket.on('lobby_overview', (overview: LobbyOverview[]) => {
@@ -82,12 +103,23 @@ function App() {
     });
 
     newSocket.on('left_lobby', () => {
+      localStorage.removeItem('coup_joined_lobby_id');
+      localStorage.removeItem('coup_player_name');
       setJoinedLobbyId(null);
       setGameState(null);
     });
 
     newSocket.on('error_message', (msg: string) => {
       setErrorMsg(msg);
+      
+      // Clear localStorage if rejoin fails due to full room or active game
+      if (msg.includes('already in progress') || msg.includes('full') || msg.includes('Invalid')) {
+        localStorage.removeItem('coup_joined_lobby_id');
+        localStorage.removeItem('coup_player_name');
+        setJoinedLobbyId(null);
+        setGameState(null);
+      }
+
       // Auto dismiss error toast
       setTimeout(() => {
         setErrorMsg(null);
@@ -101,12 +133,22 @@ function App() {
 
   const handleJoinLobby = useCallback((lobbyId: string, playerName: string) => {
     if (!socket) return;
+    
+    // Save lobby details in localStorage for reload tolerance
+    localStorage.setItem('coup_joined_lobby_id', lobbyId);
+    localStorage.setItem('coup_player_name', playerName);
+    
     setJoinedLobbyId(lobbyId);
-    socket.emit('join_lobby', { lobbyId, playerName });
+    socket.emit('join_lobby', { lobbyId, playerName, playerId: PLAYER_ID });
   }, [socket]);
 
   const handleLeaveLobby = useCallback(() => {
     if (!socket) return;
+    
+    // Clear lobby details from localStorage
+    localStorage.removeItem('coup_joined_lobby_id');
+    localStorage.removeItem('coup_player_name');
+    
     socket.emit('leave_lobby');
   }, [socket]);
 
@@ -193,7 +235,7 @@ function App() {
       {inGame ? (
         <GameBoard
           gameState={gameState}
-          localPlayerId={socket.id || ''}
+          localPlayerId={PLAYER_ID}
           onDeclareAction={handleDeclareAction}
           onRespondAction={handleRespondAction}
           onRevealCard={handleRevealCard}
@@ -207,7 +249,7 @@ function App() {
           lobbies={lobbies}
           joinedLobbyId={joinedLobbyId}
           players={gameState ? gameState.players : []}
-          localPlayerId={socket.id || ''}
+          localPlayerId={PLAYER_ID}
           onJoin={handleJoinLobby}
           onLeave={handleLeaveLobby}
           onStartGame={handleStartGame}

@@ -7,6 +7,7 @@ interface LobbyOverview {
   name: string;
   playerCount: number;
   phase: string;
+  playerIds?: string[];
 }
 
 interface Player {
@@ -110,12 +111,15 @@ export const Lobby: React.FC<LobbyProps> = ({
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {lobbies.map((lobby) => {
+                const isReconnecting = lobby.playerIds?.includes(localPlayerId);
                 const inProgress = lobby.phase !== 'LOBBY';
                 const isFull = lobby.playerCount >= 6;
+                const isDisabled = (inProgress && !isReconnecting) || (isFull && !isReconnecting);
+
                 return (
                   <button
                     key={lobby.id}
-                    disabled={inProgress || isFull}
+                    disabled={isDisabled}
                     onClick={() => handleJoinClick(lobby.id)}
                     className="glass-panel"
                     style={{
@@ -124,23 +128,24 @@ export const Lobby: React.FC<LobbyProps> = ({
                       justifyContent: 'space-between',
                       width: '100%',
                       padding: '16px',
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                      border: isReconnecting ? '1px solid var(--accent-gold)' : '1px solid rgba(255, 255, 255, 0.05)',
                       borderRadius: '12px',
-                      cursor: inProgress || isFull ? 'not-allowed' : 'pointer',
+                      cursor: isDisabled ? 'not-allowed' : 'pointer',
                       textAlign: 'left',
                       transition: 'all 0.2s',
-                      opacity: inProgress || isFull ? 0.5 : 1,
+                      opacity: isDisabled ? 0.5 : 1,
+                      boxShadow: isReconnecting ? '0 0 10px rgba(212, 175, 55, 0.15)' : 'none',
                     }}
                     onMouseEnter={(e) => {
-                      if (!inProgress && !isFull) {
+                      if (!isDisabled) {
                         e.currentTarget.style.borderColor = 'var(--accent-gold)';
                         e.currentTarget.style.transform = 'translateX(4px)';
                         e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!inProgress && !isFull) {
-                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                      if (!isDisabled) {
+                        e.currentTarget.style.borderColor = isReconnecting ? 'var(--accent-gold)' : 'rgba(255, 255, 255, 0.05)';
                         e.currentTarget.style.transform = 'translateX(0)';
                         e.currentTarget.style.background = 'var(--bg-secondary)';
                       }
@@ -148,8 +153,8 @@ export const Lobby: React.FC<LobbyProps> = ({
                   >
                     <div>
                       <h3 style={{ fontSize: '16px', color: 'white', fontWeight: 600 }}>{lobby.name}</h3>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                        {inProgress ? 'In Progress' : isFull ? 'Full (6/6)' : 'Open Lobby'}
+                      <span style={{ fontSize: '12px', color: isReconnecting ? 'var(--accent-gold)' : 'var(--text-muted)' }}>
+                        {isReconnecting ? 'Rejoin Game' : inProgress ? 'In Progress' : isFull ? 'Full (6/6)' : 'Open Lobby'}
                       </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
